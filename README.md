@@ -66,6 +66,8 @@ Your change: ₱203.00
 ✅ Thank you for ordering at McDo! Come back again!
 ~~~
 
+---
+
 ### 🧱 Program Structure 
 
 ### Main Methods:
