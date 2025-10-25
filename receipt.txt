@@ -1,0 +1,17 @@
+==== McOrder RECEIPT ====
+Date & Time: 10/25/2025 12:30 PMCashier: System Auto
+--------------------------
+
+Items Ordered:
+--------------------------
+[01] McShare Bundle for 3 Person                   ₱612.00
+[02] McShare Bundle for 4 Person                   ₱842.00
+[03] McSpaghetti Platter - Classic Meal            ₱259.00
+[04] 20 Piece - Chicken McNuggets                  ₱350.00
+[05] Snack Burger McShare Meal - Popular           ₱380.00
+
+--------------------------
+TOTAL:   ₱2,443.00
+PAYMENT: ₱2,500.00
+CHANGE:  ₱57.00
+--------------------------

@@ -1,6 +1,11 @@
+package orderingsystem;
 import java.util.Scanner;
 import java.util.ArrayList;
 import java.util.List;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class OrderingSystem{
    public static void main(String args[]){
@@ -15,6 +20,8 @@ public class OrderingSystem{
       
       boolean headerShown = false;
       int choice;
+      double payment = 0;
+      double change = 0;
       
       do{
          if(!headerShown) {
@@ -31,7 +38,7 @@ public class OrderingSystem{
             case 2 -> placeAnOrder(scanner, choice, orderPrices, orders, items, prices);
             case 3 -> viewCurrentOrder(orders, orderPrices);
             case 4 -> removeAnOrder(scanner, orders, orderPrices, choice);
-            case 5 -> checkoutOrder(scanner, orders, orderPrices);
+            case 5 -> checkoutOrder(scanner, payment, change, orders, orderPrices);
          }
       }while(choice != 6);
       System.out.println("✅ Thank you for visiting!!");
@@ -91,7 +98,7 @@ public class OrderingSystem{
       printMenu();
       char back;
    
-       do{
+      do{
          System.out.print("Back (Y): ");
          back = scanner.next().charAt(0);
       }while(Character.toUpperCase(back) != 'Y');
@@ -199,10 +206,8 @@ public class OrderingSystem{
          again = scanner.next().charAt(0);
       }while(again == 'Y' || again == 'y');
    }
-   public static void checkoutOrder(Scanner scanner, List<String> orders, List<Double> orderPrices){
+   public static void checkoutOrder(Scanner scanner, double payment, double change, List<String> orders, List<Double> orderPrices){
       double total = 0;
-      double payment = 0;
-      double change = 0;
       
       if(orders.isEmpty()){
          System.out.println("‼️  You don't have orders yet");
@@ -249,11 +254,19 @@ public class OrderingSystem{
       System.out.println("\n✅ Thank you for ordering at McDo! Come back again!");
       System.out.println("\n====================================");
       
+      try{
+         FileWriter writer = new FileWriter("receipt.txt", true);
+         writer.write(printReceipt(orderPrices, orders, change, payment));
+         writer.close();
+      }catch(IOException e){
+         System.out.println("⚠️ An error occurred while saving the receipt: " + e.getMessage());
+      }
+      
       orders.clear();
       orderPrices.clear();
    }
    public static int validateInput(Scanner scanner, int min, int max){
-      while (true) {
+      while(true){
          int choice;
          if(scanner.hasNextInt()) {
             choice = scanner.nextInt();
@@ -267,5 +280,31 @@ public class OrderingSystem{
             scanner.next();
          }
       }
+   }
+   public static String printReceipt(List<Double> orderPrices, List<String> orders, double change, double payment){
+      double total = 0;
+      StringBuilder receipt = new StringBuilder();
+      LocalDateTime now = LocalDateTime.now();
+      DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy hh:mm a");
+      
+      receipt.append("==== McOrder RECEIPT ====\n");
+      receipt.append("Date & Time: " + dtf.format(now) + "\n");
+      receipt.append("Cashier: System Auto\n");
+      receipt.append("--------------------------\n\n");
+   
+      receipt.append("Items Ordered:\n");
+      receipt.append("--------------------------\n");
+      for (int i = 0; i < orders.size(); i++) {
+         receipt.append(String.format("[%02d] %-45s ₱%,.2f%n", (i + 1), orders.get(i), orderPrices.get(i)));
+         total += orderPrices.get(i);
+      }
+   
+      receipt.append("\n--------------------------\n");
+      receipt.append(String.format("TOTAL:   ₱%,.2f%n", total));
+      receipt.append(String.format("PAYMENT: ₱%,.2f%n", payment));
+      receipt.append(String.format("CHANGE:  ₱%,.2f%n", change));
+      receipt.append("--------------------------\n");
+       
+      return receipt.toString();
    }
 }
