@@ -2,9 +2,11 @@ package orderingsystem;
 import java.util.Scanner;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 public class OrderingSystem{
@@ -19,6 +21,7 @@ public class OrderingSystem{
       List<Double> orderPrices = new ArrayList<>();
       
       boolean headerShown = false;
+      boolean Senior = false;
       int choice;
       double payment = 0;
       double change = 0;
@@ -38,7 +41,7 @@ public class OrderingSystem{
             case 2 -> placeAnOrder(scanner, choice, orderPrices, orders, items, prices);
             case 3 -> viewCurrentOrder(orders, orderPrices);
             case 4 -> removeAnOrder(scanner, orders, orderPrices, choice);
-            case 5 -> checkoutOrder(scanner, payment, change, orders, orderPrices);
+            case 5 -> checkoutOrder(scanner, payment, change, orders, orderPrices, Senior);
          }
       }while(choice != 6);
       System.out.println("✅ Thank you for visiting!!");
@@ -206,13 +209,17 @@ public class OrderingSystem{
          again = scanner.next().charAt(0);
       }while(again == 'Y' || again == 'y');
    }
-   public static void checkoutOrder(Scanner scanner, double payment, double change, List<String> orders, List<Double> orderPrices){
+   public static void checkoutOrder(Scanner scanner, double payment, double change, List<String> orders, List<Double> orderPrices, boolean Senior){
       double total = 0;
       
       if(orders.isEmpty()){
          System.out.println("‼️  You don't have orders yet");
          return;
       }
+      
+      // CALL SENIOR ID VERIFICATION
+      boolean isSenior = Id(scanner);
+      double discount = 0;
       
       printUpperBorder();
       System.out.printf("|                            CHECKOUT                              |%n");
@@ -227,6 +234,15 @@ public class OrderingSystem{
       total += orderPrices.get(i);
       }
       printLowerBorder();
+      
+      // APPLY DISCOUNT
+      if(isSenior){
+         Senior = true;
+         discount = total * 0.20;      // 20% senior discount
+         total -= discount;
+      
+         System.out.printf("Senior Discount (20%%): -₱%,.2f%n", discount);
+      }
       
       printUpperBorder();
       System.out.printf("|                        TOTAL: ₱%,.2f                          |%n", total);
@@ -256,7 +272,7 @@ public class OrderingSystem{
       
       try{
          FileWriter writer = new FileWriter("receipt.txt", true);
-         writer.write(printReceipt(orderPrices, orders, change, payment));
+         writer.write(printReceipt(orderPrices, orders, change, payment, Senior, total));
          writer.close();
       }catch(IOException e){
          System.out.println("⚠️ An error occurred while saving the receipt: " + e.getMessage());
@@ -281,10 +297,10 @@ public class OrderingSystem{
          }
       }
    }
-   public static String printReceipt(List<Double> orderPrices, List<String> orders, double change, double payment){
+   public static String printReceipt(List<Double> orderPrices, List<String> orders, double change, double payment, boolean Senior, double finalTotal){
       double total = 0;
       StringBuilder receipt = new StringBuilder();
-      LocalDateTime now = LocalDateTime.now();
+      ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Asia/Manila"));
       DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy hh:mm a");
       
       receipt.append("==== McOrder RECEIPT ====\n");
@@ -298,13 +314,123 @@ public class OrderingSystem{
          receipt.append(String.format("[%02d] %-45s ₱%,.2f%n", (i + 1), orders.get(i), orderPrices.get(i)));
          total += orderPrices.get(i);
       }
+      
+      if(Senior == true){
+         receipt.append("\nDISCOUNT:   20%\n");
+      }else{
+         receipt.append("\nDISCOUNT:   N/A\n");
+      }
    
       receipt.append("\n--------------------------\n");
-      receipt.append(String.format("TOTAL:   ₱%,.2f%n", total));
+      receipt.append(String.format("TOTAL COST:   ₱%,.2f%n", total));
+      receipt.append(String.format("DISCOUNTED TOTAL:   ₱%,.2f%n", finalTotal));
       receipt.append(String.format("PAYMENT: ₱%,.2f%n", payment));
       receipt.append(String.format("CHANGE:  ₱%,.2f%n", change));
-      receipt.append("--------------------------\n");
+      receipt.append("--------------------------\n\n");
        
       return receipt.toString();
+   }
+   public static boolean Id(Scanner sc) {
+      class Person {
+         private String name;
+         private int age;
+        
+         public Person(String name, int age) {
+            this.name = name;
+            this.age = age;
+         }
+         
+         public String getName() {
+            return name;
+         }
+         
+        public int getAge() {
+            return age;
+         }
+      }
+      
+		   
+      HashMap<Integer, Person> IdPersons = new HashMap<>();
+      
+      IdPersons.put(9812312, new Person("Juan Dela Cruz", 65));
+      IdPersons.put(1234512, new Person("Maria Clara", 70));
+      IdPersons.put(6789012, new Person("Jose Rizal", 68));
+      String answer;
+      
+      // loop until Y or N
+      while (true) {
+         System.out.print("Do you have Senior Citizen Card? (Y or N): ");
+         answer = sc.next();
+         
+      if(answer.equalsIgnoreCase("Y") || answer.equalsIgnoreCase("N")){
+         break;
+      }
+         System.out.println("Invalid input. Please answer Y or N only.");
+      }
+     
+      if (answer.equalsIgnoreCase("N")) {
+         System.out.println("No ID. No Discount.");
+         return false;
+      }
+
+      // ============================
+      //   3 ATTEMPTS FOR ID
+      // ============================
+      int attempts = 0;
+      
+      while (attempts < 6) {
+         System.out.print("Provide your ID number for verification: ");
+         String idInput = sc.next();
+      
+         // must be digits only
+         if (!idInput.matches("\\d+")) {
+            System.out.println("ID must not contain characters. Try again.");
+            attempts++;
+            continue;
+         }
+      
+         int IdNumber = Integer.parseInt(idInput);
+      
+         System.out.print("Verifying");
+         for (int i = 0; i < 5; i++) {
+            try {
+               Thread.sleep(400);
+               System.out.print(".");
+               } catch (InterruptedException e) {}
+            }
+            System.out.println();
+      
+            // check if ID exists
+            if (IdPersons.containsKey(IdNumber)) {
+               Person person = IdPersons.get(IdNumber);
+      
+               System.out.println("\nVerified!");
+               System.out.println("Name: " + person.getName());
+               System.out.println("Age: " + person.getAge());
+      
+               return true;
+            } else if (attempts == 4){
+           	System.out.println("Invalid again!!, You have only last attempt" );
+            } 
+            else if (attempts < 4) {
+               System.out.println("");
+                  System.out.println("┌------------------------------------------------------------------┐");
+                  System.out.println("|                         INVALID!!                              |");
+                  System.out.println("|              You have only " + (Math.abs(attempts - 5)) + " Attempts                         |");
+                  System.out.println("└------------------------------------------------------------------┘\n");
+               } 
+            else {
+               System.out.println("Invalid ID Number! Try again.");
+             
+              
+            } attempts++;
+         }
+      
+      // IF NAKA 3 WRONG ATTEMPTS
+      System.out.println("\n❌ You exceeded the limit of attempts!");
+      System.out.println(" ");
+      System.out.println("Cancel Discount");
+      System.out.println(" ");
+      return false;
    }
 }
